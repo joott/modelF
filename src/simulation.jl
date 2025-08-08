@@ -1,7 +1,37 @@
+using ParallelStencil
+using ParallelStencil.FiniteDifferences3D
+
 include("helpers.jl")
 
+@parallel function deterministic_elementary_step(
+        ϕ1, ϕ2, ψ,
+        dϕ1, dϕ2, dψ)
+
+    @all(dψ) = -g0 * (@all(ϕ1) * @d2_xyz(ϕ2) - @all(ϕ2) * @d2_xyz(ϕ1))
+
+    @all(dϕ1) = imag(Γ) * (-@d2_xyz(ϕ2) + m² * @all(ϕ2) + λ * (@all(ϕ1)^2 + @all(ϕ2)^2) * @all(ϕ2) + 2γ0 * @all(ψ) * @all(ϕ2))
+    @all(dϕ1) = @all(dϕ1) + g0 * @all(ϕ2) * (@all(ψ) / C0 + γ0 * (@all(ϕ1)^2 + @all(ϕ2)^2))
+
+    @all(dϕ2) = -imag(Γ) * (-@d2_xyz(ϕ1) + m² * @all(ϕ1) + λ * (@all(ϕ1)^2 + @all(ϕ2)^2) * @all(ϕ1) + 2γ0 * @all(ψ) * @all(ϕ1))
+    @all(dϕ2) = @all(dϕ2) - g0 * @all(ϕ1) * (@all(ψ) / C0 + γ0 * (@all(ϕ1)^2 + @all(ϕ2)^2))
+
+    return
+end
+
+function deterministic(state, k1, k2, k3, rk_state)
+    @parallel deterministic_elementary_step(view_tuple(state.u)..., view_tuple(k1)...)
+
+    rk_state.u .= state.u .+ Δtdet*k1
+    @parallel deterministic_elementary_step(view_tuple(rk_state.u)..., view_tuple(k2)...)
+
+    rk_state.u .= state.u .+ Δtdet*0.25*(k1 .+ k2)
+    @parallel deterministic_elementary_step(view_tuple(rk_state.u)..., view_tuple(k3)...)
+
+    state.u .+= Δtdet*(0.5*k1 .+ 0.5*k2 .+ 2.0*k3)/3.0
+end
+
 """
-  Elementary stochastic step with the transfer of the momentum density (μ-th component) from the cell x1 to x2 
+  Elementary stochastic step with the transfer of the momentum density (μ-th component) from the cell x1 to x2
 """
 function psi_step(ψ, ϕ, n, m, (i,j,k))
     xyz = ((2i + m)%L+1, j%L+1, k%L+1)
@@ -20,7 +50,7 @@ function psi_step(ψ, ϕ, n, m, (i,j,k))
 end
 
 """
-  Computing the local change of energy in the cell x 
+  Computing the local change of energy in the cell x
 """
 function ΔH_phi(ϕ, μ, ψ, m², x, q)
     ϕold = ϕ[x..., μ]
@@ -128,8 +158,10 @@ function dissipative(state, m²)
     end
 end
 
-function thermalize(state, m², N)
+function thermalize(state, arrays, m², N)
     for _ in 1:N
         dissipative(state, m²)
+
+        deterministic(state, arrays...)
     end
 end

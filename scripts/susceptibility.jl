@@ -12,7 +12,9 @@ end
 
 function main()
     @init_state
-    thermalize(state, m², L^3)
+    arrays = make_temp_arrays(state)
+
+    thermalize(state, arrays, m², L^3)
     maxt = L^3*4
 
     open("../data/output_mass_$(m²)_seed_$(seed).dat", "w") do io
@@ -29,10 +31,10 @@ function main()
                 @show i
             end
 
-            thermalize(state, m², L)
+            thermalize(state, arrays, m², L)
         end
     end
-    
+
 end
 
 main()

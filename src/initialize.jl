@@ -39,15 +39,6 @@ function parse_commandline()
     return parse_args(s)
 end
 
-#=
- Parameters below are
- 1. L is the number of lattice sites in each dimension; it accepts the second argument passed to julia   
- 2. λ is the 4 field coupling
- 3. Γ is the scalar field diffusion rate; in our calculations we set it to 1, assuming that the time is measured in the appropriate units 
- 4. T is the temperature 
- 5. m² = -2.28587 is the critical value of the mass parameter 
-=#
-
 parsed_args = parse_commandline()
 
 const cpu = parsed_args["cpu"]
@@ -59,18 +50,19 @@ const ArrayType = cpu ? Array : CuArray
 const SubArrayType = cpu ? SubArray : CuArray
 
 const λ = FloatType(4.0)
-const Γ = FloatType(1.0)
+const Γ = ComplexType(1.0 + 1.0im)
 const κ = FloatType(1.0)
 const T = FloatType(1.0)
 
 const L = parsed_args["size"]
 const γ0 = FloatType(1.0)
 const C0 = FloatType(1.0)
+const g0 = FloatType(1.0)
 const m² = FloatType(parsed_args["mass"])
-const Δt = FloatType(parsed_args["dt"]/Γ)
+const Δt = FloatType(parsed_args["dt"]/real(Γ))
 
 const Δtdet = Δt
-const Rate_phi = FloatType(sqrt(2.0*Δt*Γ))
+const Rate_phi = FloatType(sqrt(2.0*Δt*real(Γ)))
 const Rate_psi  = FloatType(sqrt(2.0*Δt*κ))
 const ξ = Normal(FloatType(0.0), FloatType(1.0))
 

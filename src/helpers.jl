@@ -38,9 +38,5 @@ macro d2_xyz(A)
 end
 
 function view_tuple(u)
-    if size(u, 4) == 3
-        return (@view(u[:,:,:,1]),@view(u[:,:,:,2]),@view(u[:,:,:,3]))
-    end
-
-    (@view(u[:,:,:,1]),@view(u[:,:,:,2]),@view(u[:,:,:,3]),@view(u[:,:,:,4]))
+    (@view(u[:,:,:,1]),@view(u[:,:,:,2]),@view(u[:,:,:,3]))
 end

@@ -29,6 +29,10 @@ function parse_commandline()
             help = "mode coupling"
             arg_type = Float64
             default = 1.0
+	"--h1"
+	    help = "external field"
+	    arg_type = Float64
+	    default = 1.0
         "--rng"
             help = "seed for random number generation"
             arg_type = Int
@@ -61,6 +65,9 @@ const ComplexType = complex(FloatType)
 const ArrayType = cpu ? Array : CuArray
 const SubArrayType = cpu ? SubArray : CuArray
 
+const h1 = FloatType(parsed_args["h1"])
+const h2 = FloatType(0.0) 
+const h_psi = FloatType(0.0)
 const λ = FloatType(4.0)
 const imG = FloatType(parsed_args["imG"] )
 const Γ = ComplexType(1.0 + 1.0im*imG)
@@ -74,7 +81,7 @@ const g0 = FloatType(parsed_args["g0"])
 const m² = FloatType(parsed_args["mass"])
 const Δt = FloatType(parsed_args["dt"]/real(Γ))
 
-const Δtdet = Δt
+const Δtdet = Δt/10
 const Rate_phi = FloatType(sqrt(2.0*Δt*real(Γ)))
 const Rate_psi  = FloatType(sqrt(2.0*Δt*κ))
 const ξ = Normal(FloatType(0.0), FloatType(1.0))

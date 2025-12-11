@@ -7,13 +7,13 @@ include("helpers.jl")
         ϕ1, ϕ2, ψ,
         dϕ1, dϕ2, dψ)
 
-    @all(dψ) = -g0 * (@all(ϕ1) * @d2_xyz(ϕ2) - @all(ϕ2) * @d2_xyz(ϕ1))
+    @all(dψ) = -g0 * (@all(ϕ1) * @d2_xyz(ϕ2) - @all(ϕ2) * @d2_xyz(ϕ1)) - g0*(@all(ϕ1)*h2 - @all(ϕ2)*h1)
 
-    @all(dϕ1) = imag(Γ) * (-@d2_xyz(ϕ2) + m² * @all(ϕ2) + λ * (@all(ϕ1)^2 + @all(ϕ2)^2) * @all(ϕ2) + 2γ0 * @all(ψ) * @all(ϕ2))
-    @all(dϕ1) = @all(dϕ1) + g0 * @all(ϕ2) * (@all(ψ) / C0 + γ0 * (@all(ϕ1)^2 + @all(ϕ2)^2))
+    @all(dϕ1) = imag(Γ) * (-@d2_xyz(ϕ2) + m² * @all(ϕ2) + λ * (@all(ϕ1)^2 + @all(ϕ2)^2) * @all(ϕ2) + 2*γ0 * @all(ψ) * @all(ϕ2) - h2)
+    @all(dϕ1) = @all(dϕ1) + g0 * @all(ϕ2) * (@all(ψ) / C0 + γ0 * (@all(ϕ1)^2 + @all(ϕ2)^2) - h_psi)
 
-    @all(dϕ2) = -imag(Γ) * (-@d2_xyz(ϕ1) + m² * @all(ϕ1) + λ * (@all(ϕ1)^2 + @all(ϕ2)^2) * @all(ϕ1) + 2γ0 * @all(ψ) * @all(ϕ1))
-    @all(dϕ2) = @all(dϕ2) - g0 * @all(ϕ1) * (@all(ψ) / C0 + γ0 * (@all(ϕ1)^2 + @all(ϕ2)^2))
+    @all(dϕ2) = -imag(Γ) * (-@d2_xyz(ϕ1) + m² * @all(ϕ1) + λ * (@all(ϕ1)^2 + @all(ϕ2)^2) * @all(ϕ1) + 2*γ0 * @all(ψ) * @all(ϕ1) - h1)
+    @all(dϕ2) = @all(dϕ2) - g0 * @all(ϕ1) * (@all(ψ) / C0 + γ0 * (@all(ϕ1)^2 + @all(ϕ2)^2) - h_psi)
 
     return
 end
@@ -60,7 +60,7 @@ function ΔH_phi(ϕ, μ, ψ, m², x, q)
     ∑nn = (ϕ[NNp(x[1]), x[2], x[3], μ] + ϕ[x[1], NNp(x[2]), x[3], μ] + ϕ[x[1], x[2], NNp(x[3]), μ]
          + ϕ[NNm(x[1]), x[2], x[3], μ] + ϕ[x[1], NNm(x[2]), x[3], μ] + ϕ[x[1], x[2], NNm(x[3]), μ])
 
-    return 3Δϕ² - q * ∑nn + 0.5m² * Δϕ² + 0.25λ * (ϕt^4 - ϕold^4) + 0.5λ * Δϕ² * ϕ[x..., 3-μ]^2 + γ0 * ψ[x...] * Δϕ²
+    return 3Δϕ² - q * ∑nn + 0.5m² * Δϕ² + 0.25λ * (ϕt^4 - ϕold^4) + 0.5λ * Δϕ² * ϕ[x..., 3-μ]^2 + γ0 * ψ[x...] * Δϕ² - q*(μ == 1 ? h1 : μ == 2 ? h2 : 0)
 end
 
 function phi_step(ϕ, μ, ψ, m², n, (i,j,k))
@@ -162,13 +162,22 @@ function thermalize(state, arrays, m², N)
     for _ in 1:N
         dissipative(state, m²)
 
-        deterministic(state, arrays...)
+        for _ in 1:round(Int,Δt/Δtdet)
+          deterministic(state, arrays...)
+        end
     end
 end
-
 
 function pre_thermalize(state, m², N)
     for _ in 1:N
         dissipative(state, m²)
+    end
+end
+
+function evolve(state, arrays, m², N)
+    for _ in 1:N
+        for _ in 1:round(Int,Δt/Δtdet)
+          deterministic(state, arrays...)
+        end
     end
 end

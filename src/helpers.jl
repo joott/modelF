@@ -30,10 +30,10 @@ macro prd_d_zc(A,B) esc(:( ($A[$ix,$iy,$NNp($iz)] * $B[$ix,$iy,$NNp($iz)]
 
 macro d2_xyz(A)
     esc(:(
-         ($A[$NNp2($ix),$iy,$iz] + $A[$NNm2($ix),$iy,$iz]
-        + $A[$ix,$NNp2($iy),$iz] + $A[$ix,$NNm2($iy),$iz]
-        + $A[$ix,$iy,$NNp2($iz)] + $A[$ix,$iy,$NNm2($iz)]
-        - 6*$A[$ix,$iy,$iz]) * 0.25
+         ($A[$NNp($ix),$iy,$iz] + $A[$NNm($ix),$iy,$iz]
+        + $A[$ix,$NNp($iy),$iz] + $A[$ix,$NNm($iy),$iz]
+        + $A[$ix,$iy,$NNp($iz)] + $A[$ix,$iy,$NNm($iz)]
+        - 6*$A[$ix,$iy,$iz])
     ))
 end
 

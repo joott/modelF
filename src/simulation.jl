@@ -135,7 +135,7 @@ config = launch_configuration(_psi_sweep_temp.fun)
 const threads_psi = min(N_psi, config.threads)
 const blocks_psi = cld(N_psi, threads_psi)
 
-const N_phi = L^3÷2
+const N_phi = L^3
 config = launch_configuration(_phi_sweep_temp.fun)
 const threads_phi = min(N_phi, config.threads)
 const blocks_phi = cld(N_phi, threads_phi)
